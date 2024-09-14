@@ -1,0 +1,69 @@
+import yfinance as yf
+import pandas as pd
+
+class Portfolio:
+    def _init_(self):
+        self.stocks = {}
+    
+    def add_stock(self, ticker, shares, purchase_price):
+        """Add a stock to the portfolio."""
+        if ticker in self.stocks:
+            print(f"Stock {ticker} is already in the portfolio. Updating shares and purchase price.")
+            self.stocks[ticker]['shares'] += shares
+            self.stocks[ticker]['purchase_price'] = purchase_price
+        else:
+            self.stocks[ticker] = {'shares': shares, 'purchase_price': purchase_price}
+        print(f"Added {shares} shares of {ticker} at ${purchase_price} each.")
+    
+    def remove_stock(self, ticker, shares):
+        """Remove a certain number of shares of a stock from the portfolio."""
+        if ticker in self.stocks:
+            if self.stocks[ticker]['shares'] >= shares:
+                self.stocks[ticker]['shares'] -= shares
+                if self.stocks[ticker]['shares'] == 0:
+                    del self.stocks[ticker]
+                print(f"Removed {shares} shares of {ticker}.")
+            else:
+                print(f"Cannot remove more shares than owned.")
+        else:
+            print(f"Stock {ticker} not found in portfolio.")
+    
+    def get_stock_data(self, ticker):
+        """Fetch current stock data."""
+        stock = yf.Ticker(ticker)
+        data = stock.history(period='1d')
+        if not data.empty:
+            return data['Close'].iloc[-1]
+        else:
+            print(f"No data available for {ticker}.")
+            return None
+    
+    def track_performance(self):
+        """Print the current performance of the entire portfolio."""
+        total_value = 0
+        for ticker, info in self.stocks.items():
+            current_price = self.get_stock_data(ticker)
+            if current_price is not None:
+                shares = info['shares']
+                purchase_price = info['purchase_price']
+                current_value = shares * current_price
+                total_value += current_value
+                gain_loss = (current_price - purchase_price) * shares
+                print(f"{ticker}: Shares: {shares}, Purchase Price: ${purchase_price:.2f}, Current Price: ${current_price:.2f}, Gain/Loss: ${gain_loss:.2f}")
+        print(f"Total Portfolio Value: ${total_value:.2f}")
+
+if _name_ == "_main_":
+    portfolio = Portfolio()
+    
+    # Example usage
+    portfolio.add_stock('AAPL', 10, 150.00)  # Adding Apple stock
+    portfolio.add_stock('GOOGL', 5, 2800.00) # Adding Google stock
+    
+    # Track performance
+    portfolio.track_performance()
+    
+    # Remove some shares
+    portfolio.remove_stock('AAPL', 5)
+    
+    # Track performance again
+    portfolio.track_performance()
